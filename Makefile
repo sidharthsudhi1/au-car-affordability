@@ -28,6 +28,6 @@ test:
 	$(PY) -m pytest -q
 
 lint:
-	$(PY) -m ruff check src tests
+	$(PY) -m ruff check src tests scraping
 
 all: data tables figures r notebook test

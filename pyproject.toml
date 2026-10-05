@@ -14,7 +14,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest==9.1.1", "ruff==0.16.10"]
+test = ["pytest==9.1.1", "ruff==0.16.10", "beautifulsoup4", "lxml", "selenium"]
+scrape = ["beautifulsoup4", "lxml", "selenium"]
 dev = ["pytest==9.1.1", "ruff==0.16.10", "jupyter==1.1.1", "nbconvert==7.17.1", "ipykernel"]
 
 [build-system]
