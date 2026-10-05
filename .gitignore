@@ -1,0 +1,11 @@
+.DS_Store
+*.twbr
+.Rhistory
+.RData
+__pycache__/
+.venv/
+.env
+.ipynb_checkpoints/
+data/raw/
+CLAUDE.md
+docs/plan.md
