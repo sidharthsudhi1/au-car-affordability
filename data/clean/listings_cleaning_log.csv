@@ -1,0 +1,10 @@
+step,rows,dropped
+raw listings,16734,0
+drop blank rows,16733,1
+drop missing or POA price,16681,52
+drop near-duplicate listings,16618,63
+"keep price $2,000 to $400,000",16593,25
+keep age 0 to 20 years,16333,260
+"drop km above 500,000",16328,5
+"drop 'new' cars with over 5,000 km",16327,1
+drop unknown body type,16043,284
