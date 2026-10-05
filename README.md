@@ -1,55 +1,56 @@
 # AU Car Affordability
 
-How has new-car affordability in Australia changed against income between 2014 and 2023,
-and for which segments, regions and worker groups?
+How affordable are cars for Australian workers, how has that changed since 2014, and
+where in the market does the burden fall?
 
-An end-to-end data project: scraping and wrangling messy price listings, joining them to
-official earnings statistics, building an affordability metric, and communicating the
-results through exploratory figures and an interactive D3 dashboard.
+## Data
 
-## Data wrangling
+| Source | What it gives | Coverage | Licence |
+|--------|---------------|----------|---------|
+| [ABS Data API](https://data.api.abs.gov.au), CPI | Motor vehicles, fuel and all-groups price indexes | Quarterly 2012-2026, national (all groups by capital city) | CC BY 4.0 |
+| [ABS Data API](https://data.api.abs.gov.au), Average Weekly Earnings | Full-time adult ordinary time earnings by sex and state | Half-yearly 2012-2026 | CC BY 4.0 |
+| [ABS Employee Earnings, Aug 2024](https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/employee-earnings/aug-2024) | Median weekly earnings by sex, full/part-time, leave entitlement, state, with RSE | Annual (August) 2014-2024 | CC BY 4.0 |
+| [Kaggle: Australian Vehicle Prices](https://www.kaggle.com/datasets/nelgiriyewithana/australian-vehicle-prices) | 16.7k car listings: price, age, km, body type, brand, state, new/used | Single 2023 snapshot | Not stated; raw file not redistributed |
 
-- **Vehicle prices:** Redbook new car listings collected with Selenium and BeautifulSoup.
-  Cleaning handles duplicate listings, inconsistent body type labels, year/brand/model
-  embedded in free-text titles, and extreme price outliers.
-- **Income:** ABS Average Weekly Earnings by sex, employment type and state, reshaped
-  from multi-level headers into tidy long format and annualised.
-- **Join:** prices and incomes aligned by year (and state for regional views) into
-  analysis-ready tables in `data/clean/`.
+The listings are a cross-section, not a time series: `Year` is the model year of a car
+listed in 2023, and 90% of listings are used. Price change over time therefore comes
+from the ABS motor vehicles index, and the listings are used for market structure
+(segments, depreciation, states).
 
-## Analysis
+## Wrangling
 
-Affordability Index (AI) = annual median income / median car price, also rebased to
-2014 = 1.0 so changes read as relative shifts.
+`make data` rebuilds every table in `data/clean/` from `data/raw/`.
 
-- Price trends by body type and brand
-- Affordability by sex x employment group
-- Affordability by state and vehicle segment
+- **ABS API:** SDMX queries for CPI and AWE, tidied and annualised (only years with
+  every quarter or half present).
+- **Employee Earnings cube:** two-row merged headers (state over value/RSE) melted to
+  long format; zero-padded unpublished years nulled; each cell flagged ok / caution /
+  unreliable using ABS RSE thresholds.
+- **Listings:** brands split across columns ("Land" + "Rover") rebuilt from titles;
+  seat counts shifted into the doors column moved back; engine, fuel use, km, doors and
+  seats parsed from text; `-` and `POA` placeholders nulled; state parsed from suburb.
 
-## Visualisation
+Every listing filter is logged ([cleaning log](data/clean/listings_cleaning_log.csv)):
 
-- Exploratory figures in R (ggplot2, fmsb) and Tableau: raincloud plots, grouped bars,
-  heatmaps, radar charts (`docs/figures/`)
-- Interactive narrative dashboard in D3.js: segment timeline, state choropleth with
-  linked ranking, employment group to segment Sankey (`dashboard/`)
+| Step | Rows | Dropped |
+|------|-----:|--------:|
+| Raw listings | 16,734 | |
+| Blank rows | 16,733 | 1 |
+| Missing or POA price | 16,681 | 52 |
+| Near-duplicate listings | 16,618 | 63 |
+| Price outside $2k-$400k | 16,593 | 25 |
+| Older than 20 years | 16,333 | 260 |
+| Over 500,000 km | 16,328 | 5 |
+| "New" with over 5,000 km | 16,327 | 1 |
+| Unknown body type | 16,043 | 284 |
 
-## Repo layout
+`make test` runs 18 checks: parser unit tests plus data validation (complete panels,
+published ABS headline reproduced, ranges, duplicates, null rates, funnel arithmetic).
+
+## Reproduce
 
 ```
-scraping/          Redbook scraper
-analysis/python/   price cleaning
-analysis/r/        income reshaping, affordability, figures
-data/clean/        analysis-ready CSVs
-dashboard/         D3 dashboard
-docs/figures/      exploratory figures
+make setup
+make fetch   # pulls ABS series; place the Kaggle CSV at data/raw/australian_vehicle_prices.csv first
+make test
 ```
-
-## Run the dashboard
-
-The dashboard fetches CSVs, so serve the repo root over HTTP:
-
-```
-python -m http.server 5500
-```
-
-Open http://localhost:5500/dashboard/index.html
