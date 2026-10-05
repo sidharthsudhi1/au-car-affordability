@@ -5,9 +5,15 @@
 How many new cars does a year's median pay buy in Australia, how has that changed since 2014,
 and which segments, states and worker groups are left behind?
 
-A data exploration and visualisation project from Monash FIT5147: data collection and
-wrangling in Python and R, visual exploration in R and Tableau, a Five Design Sheet design
-process, and an interactive narrative visualisation in D3.
+A data exploration and visualisation project from Monash FIT5147 (Semester 2, July to
+October 2025): data collection and wrangling in Python and R, visual exploration in R and
+Tableau, a Five Design Sheet design process, and an interactive narrative visualisation in D3.
+
+| Period | Stage |
+|--------|-------|
+| July - August 2025 | Topic, research questions and data collection |
+| August - September 2025 | Wrangling, cleaning and visual exploration (Data Exploration Project) |
+| October 2025 | Five Design Sheets and the D3 dashboard (Data Visualisation Project) |
 
 **[Interactive dashboard](https://sidharthsudhi1.github.io/au-car-affordability/dashboard/)** ·
 **[Analysis notebook](notebooks/analysis.ipynb)** ·
