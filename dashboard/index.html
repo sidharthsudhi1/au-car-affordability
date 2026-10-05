@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AU Car Affordability</title>
+<meta name="description" content="How many weeks of pay a new car costs Australian workers, 2014-2025, and where in the market the burden falls.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%232a78d6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #f4f3f0;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #8a8984;
+  --hairline: #e6e5e1;
+  --axis: #c9c8c2;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --emph-muted: #b4b3ad;
+  --band: rgba(0, 0, 0, 0.045);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --hairline: #2c2c2a;
+    --axis: #45443f;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --emph-muted: #5c5b56;
+    --band: rgba(255, 255, 255, 0.05);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --hairline: #2c2c2a;
+  --axis: #45443f;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --emph-muted: #5c5b56;
+  --band: rgba(255, 255, 255, 0.05);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 15px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 980px; margin: 0 auto; padding: 40px 16px 64px; }
+header h1 { font-size: clamp(26px, 4.4vw, 38px); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; }
+header p { color: var(--text-secondary); margin: 0; max-width: 680px; font-size: 16px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; gap: 12px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.theme-toggle {
+  border: 1px solid var(--hairline); background: var(--surface-1); color: var(--text-secondary);
+  border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 28px 0 8px; }
+.tile { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 12px; padding: 16px 18px; }
+.tile .num { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tile .lbl { color: var(--text-secondary); font-size: 13.5px; }
+section { margin-top: 44px; }
+section > h2 { font-size: 21px; margin: 0 0 4px; letter-spacing: -0.01em; }
+section > .lede { color: var(--text-secondary); margin: 0 0 14px; max-width: 720px; }
+.card { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 12px; padding: 16px 16px 10px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 10px; font-size: 13.5px; color: var(--text-secondary); }
+.controls label { display: inline-flex; align-items: center; gap: 6px; }
+select, input[type=number] {
+  font: inherit; font-size: 13.5px; color: var(--text-primary); background: var(--surface-0);
+  border: 1px solid var(--hairline); border-radius: 8px; padding: 5px 8px;
+}
+input[type=number] { width: 100px; }
+.seg { display: inline-flex; border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--text-secondary); padding: 5px 10px; cursor: pointer; }
+.seg button[aria-pressed=true] { background: var(--surface-0); color: var(--text-primary); font-weight: 600; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { fill: var(--text-secondary); font-family: inherit; }
+.axis path, .axis line { stroke: var(--axis); }
+.axis text { font-size: 12px; }
+.grid line { stroke: var(--hairline); }
+.grid path { display: none; }
+.note { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; }
+details { margin-top: 8px; font-size: 13px; color: var(--text-secondary); }
+summary { cursor: pointer; color: var(--text-muted); }
+table { border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--hairline); }
+th:first-child, td:first-child { text-align: left; }
+.tip {
+  position: fixed; pointer-events: none; z-index: 10; background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12); opacity: 0; transition: opacity 80ms; min-width: 150px;
+}
+.tip .t { color: var(--text-muted); font-size: 11.5px; margin-bottom: 4px; }
+.tip .row { display: flex; align-items: center; gap: 8px; }
+.tip .row b { font-variant-numeric: tabular-nums; }
+.tip .key { width: 12px; height: 2px; border-radius: 1px; flex: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-secondary); margin: 2px 0 6px; }
+.legend button { font: inherit; display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; color: inherit; cursor: pointer; padding: 2px 0; }
+.legend button[aria-pressed=false] { opacity: 0.4; }
+.legend .key { width: 14px; height: 2px; border-radius: 1px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+footer { margin-top: 56px; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--hairline); padding-top: 16px; }
+footer a, .lede a { color: var(--series-1); }
+.focus-ring:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <span class="eyebrow">Australia · 2014-2025</span>
+    <button class="theme-toggle" id="theme" type="button">Theme: auto</button>
+  </div>
+  <header>
+    <h1>New cars cost five fewer weeks of pay than in 2014. Not everyone gets the full benefit.</h1>
+    <p>Earnings have grown faster than quality-adjusted car prices, even through the 2021-23 supply shortage. But part-time workers still need two and a half times the weeks, the cheapest segment is disappearing, and two states carry real price premiums.</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section>
+    <h2>Weeks of pay to buy a typical new car</h2>
+    <p class="lede">The median 2023 new car ($52,979 in the listings) moved back through time with the ABS motor vehicles price index, divided by full-time adult weekly earnings.</p>
+    <div class="card">
+      <div class="controls">
+        <label>Region <select id="region" class="focus-ring"></select></label>
+        <span class="seg" id="sex" role="group" aria-label="Sex"></span>
+      </div>
+      <div class="legend" id="weeks-legend"></div>
+      <div id="weeks-chart"></div>
+      <p class="note">Shaded band: 2021-23 supply shortage. Source: ABS CPI and Average Weekly Earnings; Kaggle Australian Vehicle Prices.</p>
+      <details><summary>Table view</summary><div id="weeks-table"></div></details>
+    </div>
+  </section>
+
+  <section>
+    <h2>What would it cost you?</h2>
+    <p class="lede">Pick a worker group or type your own weekly pay to see how many weeks each segment's median new car costs. Whiskers show the bootstrap 95% interval on each segment's median price.</p>
+    <div class="card">
+      <div class="controls">
+        <label>Group <select id="group" class="focus-ring"></select></label>
+        <label>Weekly pay $ <input type="number" id="pay" min="100" max="10000" step="10" class="focus-ring"></label>
+      </div>
+      <div id="calc-chart"></div>
+      <p class="note">Group medians from ABS Employee Earnings, August 2023. Segment prices: median new and demo listings, 2023.</p>
+      <details><summary>Table view</summary><div id="calc-table"></div></details>
+    </div>
+  </section>
+
+  <section>
+    <h2>Are some states dearer?</h2>
+    <p class="lede">Raw medians compare different mixes of cars. The like-for-like view holds age, km, segment, brand, fuel, gearbox and drive fixed using a hedonic regression on 15,109 listings.</p>
+    <div class="card">
+      <div class="controls">
+        <span class="seg" id="state-mode" role="group" aria-label="Comparison">
+          <button type="button" data-v="raw" aria-pressed="false">Raw median gap</button>
+          <button type="button" data-v="adjusted" aria-pressed="true">Like-for-like premium</button>
+        </span>
+      </div>
+      <div id="state-chart"></div>
+      <p class="note">Relative to NSW. Whiskers: 95% CI (HC3 robust). Filled marks are significant at p &lt; 0.05.</p>
+      <details><summary>Table view</summary><div id="state-table"></div></details>
+    </div>
+  </section>
+
+  <section>
+    <h2>How fast do cars lose value?</h2>
+    <p class="lede">Modelled share of the new price retained, same brand, km, state and fuel. Toggle segments in the legend; pick a brand to compare its five-year retention.</p>
+    <div class="two">
+      <div class="card">
+        <div class="legend" id="dep-legend"></div>
+        <div id="dep-chart"></div>
+        <details><summary>Table view</summary><div id="dep-table"></div></details>
+      </div>
+      <div class="card">
+        <div class="controls"><label>Highlight <select id="brand" class="focus-ring"></select></label></div>
+        <div id="brand-chart"></div>
+      </div>
+    </div>
+    <p class="note">Source: Kaggle Australian Vehicle Prices (2023 snapshot). Bands and lines are 95% confidence intervals.</p>
+  </section>
+
+  <footer>
+    Built with D3 from tables produced by a tested Python pipeline. Car prices: ABS motor vehicles CPI (quality adjusted) anchored to 2023 listings. Earnings: ABS Average Weekly Earnings and Employee Earnings. Listings are asking prices from a single 2023 snapshot.
+    <br><a href="https://github.com/sidharthsudhi1/au-car-affordability">Code, data pipeline and notebook on GitHub</a>
+  </footer>
+</main>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const BASE = "../data/clean/analysis/";
+const SEGMENTS = ["Hatchback", "Sedan", "SUV", "Ute", "Wagon"];
+const REGIONS = { AUS: "Australia", NSW: "New South Wales", VIC: "Victoria", QLD: "Queensland", WA: "Western Australia", SA: "South Australia", TAS: "Tasmania", ACT: "ACT", NT: "Northern Territory" };
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const segColor = s => css(`--series-${SEGMENTS.indexOf(s) + 1}`);
+const fmt$ = d3.format("$,.0f");
+const fmt1 = d3.format(".1f");
+const pct = d3.format(".0%");
+const tip = document.getElementById("tip");
+const themeBtn = document.getElementById("theme");
+const modes = ["auto", "light", "dark"];
+let mode = "auto";
+try { mode = localStorage.getItem("theme") || "auto"; } catch (e) { /* storage unavailable */ }
+function applyTheme() {
+  if (mode === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", mode);
+  themeBtn.textContent = `Theme: ${mode}`;
+}
+applyTheme();
+
+function el(tag, attrs = {}, text) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function showTip(event, title, rows) {
+  tip.replaceChildren(el("div", { class: "t" }, title));
+  for (const r of rows) {
+    const row = el("div", { class: "row" });
+    if (r.color) { const k = el("span", { class: "key" }); k.style.background = r.color; row.append(k); }
+    row.append(el("b", {}, r.value), el("span", {}, r.label));
+    tip.append(row);
+  }
+  const x = Math.min(event.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  const y = Math.min(event.clientY + 14, window.innerHeight - tip.offsetHeight - 8);
+  tip.style.left = `${x}px`; tip.style.top = `${y}px`; tip.style.opacity = 1;
+}
+const hideTip = () => { tip.style.opacity = 0; };
+
+function table(target, headers, rows) {
+  const t = el("table"), head = el("tr");
+  headers.forEach(h => head.append(el("th", {}, h)));
+  t.append(head);
+  rows.forEach(r => { const tr = el("tr"); r.forEach(c => tr.append(el("td", {}, c))); t.append(tr); });
+  document.getElementById(target).replaceChildren(t);
+}
+
+const narrow = () => window.innerWidth < 600;
+
+function frame(target, width, height, m) {
+  // Draw at the container's real width so text stays legible on phones
+  width = document.getElementById(target).clientWidth || width;
+  if (narrow()) { m = { ...m, l: Math.min(m.l, 92), r: Math.min(m.r, 52) }; height = Math.round(height * 0.85); }
+  const svg = d3.select(`#${target}`).html("").append("svg")
+    .attr("viewBox", `0 0 ${width} ${height}`).attr("role", "img");
+  return { svg, g: svg.append("g").attr("transform", `translate(${m.l},${m.t})`), w: width - m.l - m.r, h: height - m.t - m.b, m };
+}
+
+function segButtons(id, options, value, onChange) {
+  const box = document.getElementById(id);
+  if (options) box.replaceChildren(...options.map(o => el("button", { type: "button", "data-v": o, "aria-pressed": o === value }, o)));
+  box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    onChange(b.dataset.v);
+  }));
+}
+
+Promise.all([
+  d3.csv(BASE + "weeks_by_awe.csv", d3.autoType),
+  d3.csv(BASE + "group_segment_matrix.csv", d3.autoType),
+  d3.csv(BASE + "new_segment_prices.csv", d3.autoType),
+  d3.csv(BASE + "state_premiums.csv", d3.autoType),
+  d3.csv(BASE + "depreciation_curves.csv", d3.autoType),
+  d3.csv(BASE + "brand_retention.csv", d3.autoType),
+  d3.csv(BASE + "weeks_by_group.csv", d3.autoType),
+]).then(([awe, matrix, segPrices, states, dep, brands, groups]) => {
+  const state = { region: "AUS", sex: "Persons", group: "Full-time females", pay: null, stateMode: "adjusted", segs: new Set(SEGMENTS), brand: "Toyota" };
+
+  function tiles() {
+    const aus = awe.filter(d => d.region === "AUS" && d.sex === "Persons");
+    const first = aus.find(d => d.year === 2014), last = aus[aus.length - 1];
+    const g = groups.filter(d => d.year === 2024 && d.sex === "Persons");
+    const ft = g.find(d => d.work_status === "Full-time"), pt = g.find(d => d.work_status === "Part-time");
+    const box = document.getElementById("tiles");
+    box.replaceChildren(...[
+      [fmt1(last.weeks), `weeks of full-time pay for a typical new car in ${last.year}`],
+      [d3.format("+.0%")(last.weeks / first.weeks - 1), "change in weeks needed since 2014"],
+      [`${fmt1(pt.weeks / ft.weeks)}x`, "weeks needed by part-time vs full-time workers (2024)"],
+    ].map(([n, l]) => { const t = el("div", { class: "tile" }); t.append(el("div", { class: "num" }, n), el("div", { class: "lbl" }, l)); return t; }));
+  }
+
+  // --- Weeks over time ---
+  const regionSel = document.getElementById("region");
+  Object.entries(REGIONS).forEach(([k, v]) => regionSel.append(el("option", { value: k }, v)));
+  regionSel.addEventListener("change", e => { state.region = e.target.value; drawWeeks(); });
+  segButtons("sex", ["Persons", "Females", "Males"], state.sex, v => { state.sex = v; drawWeeks(); });
+
+  function drawWeeks() {
+    const series = [
+      { key: "selected", name: `${REGIONS[state.region]}, ${state.sex.toLowerCase()}`, color: css("--series-1"),
+        data: awe.filter(d => d.region === state.region && d.sex === state.sex) },
+    ];
+    if (state.region !== "AUS" || state.sex !== "Persons")
+      series.push({ key: "aus", name: "Australia, persons", color: css("--emph-muted"), data: awe.filter(d => d.region === "AUS" && d.sex === "Persons") });
+    const legend = document.getElementById("weeks-legend");
+    legend.replaceChildren(...(series.length > 1 ? series.map(s => {
+      const b = el("span"); b.style.display = "inline-flex"; b.style.alignItems = "center"; b.style.gap = "6px";
+      const k = el("span", { class: "key" }); k.style.background = s.color; k.style.width = "14px"; k.style.height = "2px";
+      b.append(k, el("span", {}, s.name)); return b;
+    }) : []));
+
+    const { svg, g, w, h } = frame("weeks-chart", 900, 340, { t: 16, r: 56, b: 30, l: 40 });
+    svg.attr("aria-label", "Line chart of weeks of pay to buy a typical new car by year");
+    const all = series.flatMap(s => s.data);
+    const x = d3.scaleLinear().domain(d3.extent(all, d => d.year)).range([0, w]);
+    const y = d3.scaleLinear().domain([d3.min(all, d => d.weeks) * 0.92, d3.max(all, d => d.weeks) * 1.05]).nice().range([h, 0]);
+    g.append("rect").attr("x", x(2020.5)).attr("width", x(2023.5) - x(2020.5)).attr("y", 0).attr("height", h).attr("fill", css("--band"));
+    g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(narrow() ? 5 : 12).tickFormat(d3.format("d")).tickSizeOuter(0));
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(5).tickSizeOuter(0)).call(a => a.select(".domain").remove());
+    const line = d3.line().x(d => x(d.year)).y(d => y(d.weeks)).curve(d3.curveMonotoneX);
+    for (const s of [...series].reverse()) {
+      g.append("path").datum(s.data).attr("fill", "none").attr("stroke", s.color).attr("stroke-width", 2).attr("d", line);
+      const last = s.data[s.data.length - 1];
+      g.append("circle").attr("cx", x(last.year)).attr("cy", y(last.weeks)).attr("r", 4.5).attr("fill", s.color).attr("stroke", css("--surface-1")).attr("stroke-width", 2);
+      g.append("text").attr("x", x(last.year) + 8).attr("y", y(last.weeks)).attr("dy", "0.35em")
+        .style("fill", css("--text-primary")).style("font-weight", s.key === "selected" ? 600 : 400).style("font-size", "12.5px").text(fmt1(last.weeks));
+    }
+    const first = series[0].data[0];
+    g.append("text").attr("x", x(first.year)).attr("y", y(first.weeks) - 10).attr("text-anchor", "start")
+      .style("fill", css("--text-primary")).style("font-weight", 600).style("font-size", "12.5px").text(fmt1(first.weeks));
+
+    const cross = g.append("line").attr("y1", 0).attr("y2", h).attr("stroke", css("--axis")).style("opacity", 0);
+    const dots = g.append("g");
+    g.append("rect").attr("width", w).attr("height", h).attr("fill", "transparent")
+      .on("pointermove", ev => {
+        const yr = Math.round(x.invert(d3.pointer(ev)[0]));
+        cross.attr("x1", x(yr)).attr("x2", x(yr)).style("opacity", 1);
+        const rows = series.map(s => ({ s, d: s.data.find(d => d.year === yr) })).filter(r => r.d);
+        dots.selectAll("circle").data(rows).join("circle").attr("cx", r => x(r.d.year)).attr("cy", r => y(r.d.weeks))
+          .attr("r", 4).attr("fill", r => r.s.color).attr("stroke", css("--surface-1")).attr("stroke-width", 2);
+        showTip(ev, String(yr), rows.flatMap(r => [
+          { color: r.s.color, value: `${fmt1(r.d.weeks)} wks`, label: r.s.name },
+        ]).concat(rows.length ? [{ value: fmt$(rows[0].d.car_price), label: "typical new car" }, { value: fmt$(rows[0].d.weekly_ote), label: "weekly earnings" }] : []));
+      })
+      .on("pointerleave", () => { cross.style("opacity", 0); dots.selectAll("circle").remove(); hideTip(); });
+
+    table("weeks-table", ["Year", "Weeks", "Car price", "Weekly earnings"],
+      series[0].data.map(d => [d.year, fmt1(d.weeks), fmt$(d.car_price), fmt$(d.weekly_ote)]));
+  }
+
+  // --- Calculator ---
+  const groupSel = document.getElementById("group");
+  const payIn = document.getElementById("pay");
+  const groupPay = d3.rollup(matrix, v => v[0].median_weekly, d => d.group);
+  [...groupPay.keys()].sort((a, b) => groupPay.get(b) - groupPay.get(a))
+    .forEach(gname => groupSel.append(el("option", { value: gname }, `${gname} ($${groupPay.get(gname)}/wk)`)));
+  groupSel.append(el("option", { value: "custom" }, "Custom"));
+  groupSel.value = state.group;
+  payIn.value = groupPay.get(state.group);
+  groupSel.addEventListener("change", e => {
+    if (e.target.value !== "custom") { state.group = e.target.value; payIn.value = groupPay.get(state.group); }
+    drawCalc();
+  });
+  payIn.addEventListener("input", () => { groupSel.value = "custom"; drawCalc(); });
+
+  function drawCalc() {
+    const pay = Math.max(100, +payIn.value || 0);
+    const rows = segPrices.map(s => ({ ...s, weeks: s.median_price / pay, lo: s.ci_lo / pay, hi: s.ci_hi / pay })).sort((a, b) => a.weeks - b.weeks);
+    const { svg, g, w, h } = frame("calc-chart", 900, 250, { t: 8, r: 70, b: 30, l: 120 });
+    svg.attr("aria-label", "Bar chart of weeks of pay per segment");
+    const x = d3.scaleLinear().domain([0, Math.max(60, d3.max(rows, d => d.hi) * 1.05)]).nice().range([0, w]);
+    const y = d3.scaleBand().domain(rows.map(d => d.segment)).range([0, h]).padding(0.38);
+    g.append("g").attr("class", "grid").call(d3.axisBottom(x).ticks(6).tickSize(h).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(6).tickSizeOuter(0)).call(a => a.select(".domain").remove());
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0).tickPadding(10)).call(a => a.select(".domain").remove())
+      .selectAll("text").style("font-size", "13px").style("fill", css("--text-primary"));
+    const color = css("--series-1");
+    const bars = g.selectAll(".bar").data(rows, d => d.segment).join("g").attr("class", "bar");
+    bars.append("path").attr("fill", color).attr("d", d => {
+      const x1 = x(d.weeks), y0 = y(d.segment), bh = y.bandwidth(), r = Math.min(4, x1);
+      return `M0,${y0}H${x1 - r}Q${x1},${y0} ${x1},${y0 + r}V${y0 + bh - r}Q${x1},${y0 + bh} ${x1 - r},${y0 + bh}H0Z`;
+    });
+    bars.append("line").attr("x1", d => x(d.lo)).attr("x2", d => x(d.hi)).attr("y1", d => y(d.segment) + y.bandwidth() / 2).attr("y2", d => y(d.segment) + y.bandwidth() / 2)
+      .attr("stroke", css("--text-primary")).attr("stroke-width", 1.2).style("opacity", 0.55);
+    bars.append("text").attr("x", d => x(d.hi) + 8).attr("y", d => y(d.segment) + y.bandwidth() / 2).attr("dy", "0.35em")
+      .style("fill", css("--text-primary")).style("font-weight", 600).style("font-size", "12.5px").text(d => `${fmt1(d.weeks)} wks`);
+    bars.append("rect").attr("x", 0).attr("y", d => y(d.segment) - 6).attr("width", w).attr("height", y.bandwidth() + 12).attr("fill", "transparent")
+      .on("pointermove", (ev, d) => showTip(ev, d.segment, [
+        { color, value: `${fmt1(d.weeks)} weeks`, label: `(${fmt1(d.lo)}-${fmt1(d.hi)})` },
+        { value: fmt$(d.median_price), label: `median new price, n=${d.n}` },
+      ])).on("pointerleave", hideTip);
+    table("calc-table", ["Segment", "Median new price", "Weeks", "95% CI"],
+      rows.map(d => [d.segment, fmt$(d.median_price), fmt1(d.weeks), `${fmt1(d.lo)}-${fmt1(d.hi)}`]));
+  }
+
+  // --- States ---
+  segButtons("state-mode", null, state.stateMode, v => { state.stateMode = v; drawStates(); });
+  let stateChart = null;
+  function drawStates() {
+    const cw = document.getElementById("state-chart").clientWidth;
+    if (!stateChart || stateChart.cw !== cw) {
+      stateChart = frame("state-chart", 900, 330, { t: 8, r: 80, b: 34, l: 150 });
+      stateChart.cw = cw;
+      stateChart.svg.attr("aria-label", "Dot plot of state price gaps relative to NSW");
+    }
+    const { g, w, h, m } = stateChart;
+    const adj = state.stateMode === "adjusted";
+    const rows = [...states].sort((a, b) => (adj ? b.adjusted_pct - a.adjusted_pct : b.raw_pct - a.raw_pct));
+    const x = d3.scaleLinear().domain([-10, 25]).range([0, w]);
+    const y = d3.scalePoint().domain(rows.map(d => d.state)).range([0, h]).padding(0.5);
+    const t = d3.transition().duration(stateChart.drawn ? 550 : 0).ease(d3.easeCubicInOut);
+    stateChart.drawn = true;
+    g.selectAll(".grid").data([0]).join("g").attr("class", "grid").call(d3.axisBottom(x).ticks(7).tickSize(h).tickFormat(""));
+    g.selectAll(".xaxis").data([0]).join("g").attr("class", "axis xaxis").attr("transform", `translate(0,${h})`)
+      .call(d3.axisBottom(x).ticks(narrow() ? 4 : 7).tickFormat(d => `${d > 0 ? "+" : ""}${d}%`).tickSizeOuter(0)).call(a => a.select(".domain").remove());
+    g.selectAll(".zero").data([0]).join("line").attr("class", "zero").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", h).attr("stroke", css("--text-secondary"));
+    const c = css("--series-1"), muted = css("--emph-muted");
+    const rowsG = g.selectAll(".st").data(rows, d => d.state).join(enter => {
+      const r = enter.append("g").attr("class", "st").attr("transform", d => `translate(0,${y(d.state)})`);
+      r.append("text").attr("class", "lab").attr("x", -12).attr("text-anchor", "end").attr("dy", "0.35em").style("font-size", "13px").style("fill", css("--text-primary"));
+      r.append("line").attr("class", "ci").attr("stroke-width", 1.4);
+      r.append("circle").attr("class", "dot").attr("r", 6).attr("stroke", css("--surface-1")).attr("stroke-width", 2);
+      r.append("text").attr("class", "val").attr("dy", "0.35em").style("font-size", "12.5px");
+      r.append("rect").attr("class", "hit").attr("fill", "transparent").attr("x", -m.l).attr("width", w + m.l + m.r).attr("height", 30).attr("y", -15);
+      return r;
+    });
+    rowsG.transition(t).attr("transform", d => `translate(0,${y(d.state)})`);
+    rowsG.select(".lab").text(d => (narrow() ? d.state : `${d.state}  n=${d3.format(",")(d.n)}`));
+    const sig = d => adj && d.p_value < 0.05 && d.state !== "NSW";
+    const val = d => (adj ? d.adjusted_pct : d.raw_pct);
+    rowsG.select(".ci").transition(t).attr("x1", d => x(adj ? d.ci_lo : d.raw_pct)).attr("x2", d => x(adj ? d.ci_hi : d.raw_pct))
+      .attr("stroke", d => (adj ? (sig(d) || d.state === "NSW" ? c : muted) : muted));
+    rowsG.select(".dot").transition(t).attr("cx", d => x(val(d)))
+      .attr("fill", d => (adj ? (sig(d) || d.state === "NSW" ? c : css("--surface-1")) : muted))
+      .attr("stroke", d => (adj && !sig(d) && d.state !== "NSW" ? c : css("--surface-1")));
+    rowsG.select(".val").transition(t).attr("x", d => x(adj ? Math.max(d.ci_hi, val(d)) : val(d)) + 12)
+      .text(d => `${d3.format("+.1f")(val(d))}%${sig(d) ? " *" : ""}`)
+      .style("fill", d => (sig(d) ? css("--text-primary") : css("--text-secondary"))).style("font-weight", d => (sig(d) ? 600 : 400));
+    rowsG.select(".hit").on("pointermove", (ev, d) => showTip(ev, REGIONS[d.state], [
+      { color: c, value: `${d3.format("+.1f")(d.adjusted_pct)}%`, label: `like-for-like (${fmt1(d.ci_lo)} to ${fmt1(d.ci_hi)})` },
+      { color: muted, value: `${d3.format("+.1f")(d.raw_pct)}%`, label: `raw median (${fmt$(d.raw_median)})` },
+      { value: d.p_value < 0.001 ? "<0.001" : d3.format(".3f")(d.p_value), label: "p-value" },
+    ])).on("pointerleave", hideTip);
+    table("state-table", ["State", "Listings", "Raw gap", "Like-for-like", "95% CI", "p"],
+      rows.map(d => [d.state, d3.format(",")(d.n), `${fmt1(d.raw_pct)}%`, `${fmt1(d.adjusted_pct)}%`, `${fmt1(d.ci_lo)} to ${fmt1(d.ci_hi)}`, d3.format(".3f")(d.p_value)]));
+  }
+
+  // --- Depreciation ---
+  function drawDepLegend() {
+    document.getElementById("dep-legend").replaceChildren(...SEGMENTS.map(s => {
+      const b = el("button", { type: "button", "aria-pressed": state.segs.has(s), class: "focus-ring" });
+      const k = el("span", { class: "key" }); k.style.background = segColor(s);
+      b.append(k, el("span", {}, s));
+      b.addEventListener("click", () => {
+        if (state.segs.has(s) && state.segs.size > 1) state.segs.delete(s); else state.segs.add(s);
+        drawDepLegend(); drawDep();
+      });
+      return b;
+    }));
+  }
+  function drawDep() {
+    const { svg, g, w, h } = frame("dep-chart", 460, 320, { t: 10, r: 46, b: 32, l: 40 });
+    svg.attr("aria-label", "Depreciation curves by segment");
+    const x = d3.scaleLinear().domain([0, 15]).range([0, w]);
+    const y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
+    g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(4).tickFormat(d => `${d}y`).tickSizeOuter(0));
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(5).tickFormat(pct).tickSizeOuter(0)).call(a => a.select(".domain").remove());
+    const by = d3.group(dep.filter(d => state.segs.has(d.segment)), d => d.segment);
+    const area = d3.area().x(d => x(d.age)).y0(d => y(d.retained_lo)).y1(d => y(d.retained_hi));
+    const line = d3.line().x(d => x(d.age)).y(d => y(d.retained));
+    for (const [s, data] of by) {
+      g.append("path").datum(data).attr("fill", segColor(s)).attr("opacity", 0.14).attr("d", area);
+      g.append("path").datum(data).attr("fill", "none").attr("stroke", segColor(s)).attr("stroke-width", 2).attr("d", line);
+    }
+    const cross = g.append("line").attr("y1", 0).attr("y2", h).attr("stroke", css("--axis")).style("opacity", 0);
+    g.append("rect").attr("width", w).attr("height", h).attr("fill", "transparent")
+      .on("pointermove", ev => {
+        const age = Math.max(0, Math.min(15, Math.round(x.invert(d3.pointer(ev)[0]))));
+        cross.attr("x1", x(age)).attr("x2", x(age)).style("opacity", 1);
+        const rows = [...by].map(([s, data]) => ({ s, d: data.find(d => d.age === age) })).sort((a, b) => b.d.retained - a.d.retained);
+        showTip(ev, `${age} years old`, rows.map(r => ({ color: segColor(r.s), value: pct(r.d.retained), label: r.s })));
+      })
+      .on("pointerleave", () => { cross.style("opacity", 0); hideTip(); });
+    table("dep-table", ["Segment", "3 years", "5 years", "10 years"],
+      SEGMENTS.map(s => [s, ...[3, 5, 10].map(a => pct(dep.find(d => d.segment === s && d.age === a).retained))]));
+  }
+
+  const brandSel = document.getElementById("brand");
+  brands.forEach(b => brandSel.append(el("option", { value: b.brand }, b.brand)));
+  brandSel.value = state.brand;
+  brandSel.addEventListener("change", e => { state.brand = e.target.value; drawBrands(); });
+  function drawBrands() {
+    const rows = [...brands].sort((a, b) => b.retained - a.retained);
+    const { svg, g, w, h } = frame("brand-chart", 460, 360, { t: 6, r: 44, b: 30, l: 108 });
+    svg.attr("aria-label", "Five-year value retention by brand");
+    const x = d3.scaleLinear().domain([0.45, 0.8]).range([0, w]);
+    const y = d3.scalePoint().domain(rows.map(d => d.brand)).range([0, h]).padding(0.5);
+    g.append("g").attr("class", "grid").call(d3.axisBottom(x).ticks(4).tickSize(h).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(4).tickFormat(pct).tickSizeOuter(0)).call(a => a.select(".domain").remove());
+    const on = d => d.brand === state.brand;
+    const c = css("--series-1"), muted = css("--emph-muted");
+    const r = g.selectAll(".b").data(rows).join("g").attr("transform", d => `translate(0,${y(d.brand)})`);
+    r.append("text").attr("x", -10).attr("text-anchor", "end").attr("dy", "0.35em").style("font-size", "12.5px")
+      .style("fill", d => (on(d) ? css("--text-primary") : css("--text-secondary"))).style("font-weight", d => (on(d) ? 600 : 400)).text(d => d.brand);
+    r.append("line").attr("x1", d => x(d.ci_lo)).attr("x2", d => x(d.ci_hi)).attr("stroke", d => (on(d) ? c : muted)).attr("stroke-width", 1.4);
+    r.append("circle").attr("cx", d => x(d.retained)).attr("r", d => (on(d) ? 6 : 4.5)).attr("fill", d => (on(d) ? c : muted)).attr("stroke", css("--surface-1")).attr("stroke-width", 2);
+    r.filter(on).append("text").attr("x", d => x(d.ci_hi) + 8).attr("dy", "0.35em").style("font-size", "12.5px").style("font-weight", 600)
+      .style("fill", css("--text-primary")).text(d => pct(d.retained));
+    r.append("rect").attr("x", -108).attr("y", -9).attr("width", w + 108 + 44).attr("height", 18).attr("fill", "transparent")
+      .on("pointermove", (ev, d) => showTip(ev, d.brand, [
+        { color: c, value: pct(d.retained), label: "kept after 5 years" },
+        { value: `${pct(d.ci_lo)}-${pct(d.ci_hi)}`, label: "95% CI" },
+        { value: d3.format(",")(d.n), label: "listings" },
+      ])).on("pointerleave", hideTip)
+      .on("click", (ev, d) => { state.brand = d.brand; brandSel.value = d.brand; drawBrands(); });
+  }
+
+  function drawAll() { tiles(); drawWeeks(); drawCalc(); drawStates(); drawDepLegend(); drawDep(); drawBrands(); }
+  drawAll();
+
+  themeBtn.addEventListener("click", () => {
+    mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+    try { localStorage.setItem("theme", mode); } catch (e) { /* storage unavailable */ }
+    applyTheme();
+    stateChart = null;
+    drawAll();
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (mode === "auto") { stateChart = null; drawAll(); } });
+  let resizeTimer;
+  let lastWidth = window.innerWidth;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastWidth) return;
+    lastWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { stateChart = null; drawAll(); }, 150);
+  });
+}).catch(err => {
+  document.querySelector("main").append(el("p", { class: "note" }, `Could not load data (${err.message}). Serve the repo root over HTTP; see the README.`));
+});
+</script>
+</body>
+</html>
