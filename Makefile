@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: setup fetch data tables figures notebook test lint all
+.PHONY: setup fetch data tables figures r notebook test lint all
 
 setup:
 	python3.12 -m venv .venv
@@ -18,6 +18,9 @@ tables:
 figures:
 	$(PY) -m carafford.figures
 
+r:
+	Rscript r/run_all.R
+
 notebook:
 	$(PY) -m jupyter nbconvert --to notebook --execute --inplace notebooks/analysis.ipynb
 
@@ -27,4 +30,4 @@ test:
 lint:
 	$(PY) -m ruff check src tests
 
-all: data tables figures notebook test
+all: data tables figures r notebook test
