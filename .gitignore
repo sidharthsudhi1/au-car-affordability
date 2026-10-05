@@ -1,11 +1,14 @@
 .DS_Store
-*.twbr
 .Rhistory
 .RData
 __pycache__/
 .venv/
 .env
 .ipynb_checkpoints/
-data/raw/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
 CLAUDE.md
-docs/plan.md
+docs/
+data/raw/australian_vehicle_prices.csv
+data/interim/
