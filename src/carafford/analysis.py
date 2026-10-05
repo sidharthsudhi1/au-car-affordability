@@ -173,16 +173,17 @@ def depreciation_curves(df: pd.DataFrame, max_age: int = 15) -> pd.DataFrame:
     ).fit(cov_type="HC3")
     rows = []
     for seg in SEGMENTS:
-        grid = pd.DataFrame({"age": np.arange(0, max_age + 1), "body_type": seg})
-        for c in ["log_km", "brand_g", "state", "fuel_type"]:
-            grid[c] = d[c].median() if c == "log_km" else d[c].mode()[0]
-        pr = fit.get_prediction(grid).summary_frame(alpha=0.05)
-        new = pr["mean"].iloc[0]
-        grid["retained"] = np.exp(pr["mean"] - new)
-        grid["retained_lo"] = np.exp(pr["mean_ci_lower"] - new)
-        grid["retained_hi"] = np.exp(pr["mean_ci_upper"] - new)
-        rows.append(grid[["body_type", "age", "retained", "retained_lo", "retained_hi"]])
-    return pd.concat(rows, ignore_index=True).rename(columns={"body_type": "segment"})
+        for age in range(max_age + 1):
+            # Contrast against age 0 of the same segment, so the interval is zero-width at age 0
+            c = pd.Series(0.0, index=fit.params.index)
+            c["age"], c["I(age ** 2)"] = age, age**2
+            if f"C(body_type)[T.{seg}]:age" in c.index:
+                c[f"C(body_type)[T.{seg}]:age"] = age
+                c[f"C(body_type)[T.{seg}]:I(age ** 2)"] = age**2
+            est, se = float(c @ fit.params), float(np.sqrt(c @ fit.cov_params() @ c))
+            rows.append({"segment": seg, "age": age, "retained": np.exp(est),
+                         "retained_lo": np.exp(est - Z95 * se), "retained_hi": np.exp(est + Z95 * se)})
+    return pd.DataFrame(rows)
 
 
 def brand_retention(df: pd.DataFrame, at_age: int = 5) -> pd.DataFrame:
