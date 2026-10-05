@@ -211,6 +211,25 @@ def brand_retention(df: pd.DataFrame, at_age: int = 5) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("retained", ascending=False).reset_index(drop=True)
 
 
+def ai_panel(prices: pd.DataFrame, seg_prices: pd.DataFrame, earnings: pd.DataFrame,
+             premiums: pd.DataFrame) -> pd.DataFrame:
+    """Affordability Index by year, state, sex, work status and segment for the dashboard.
+
+    AI = annual median earnings / segment price. Segment prices are 2023 medians moved with the
+    national motor vehicles index and scaled by each state's like-for-like premium.
+    """
+    rel = prices.set_index("year")["car_price"] / prices.set_index("year").loc[SNAPSHOT_YEAR, "car_price"]
+    prem = premiums.set_index("state")["adjusted_pct"].to_dict() | {"AUS": 0.0}
+    e = earnings[earnings["leave"] == "Total"].copy()
+    e = e[e["year"].isin(rel.index)]
+    out = e.merge(seg_prices[["segment", "median_price"]], how="cross")
+    out["price"] = out["median_price"] * out["year"].map(rel) * (1 + out["state"].map(prem) / 100)
+    out["annual_income"] = out["median_weekly"] * 52
+    out["ai"] = out["annual_income"] / out["price"]
+    cols = ["year", "state", "sex", "work_status", "segment", "annual_income", "price", "ai"]
+    return out[cols].round({"annual_income": 0, "price": 0, "ai": 4}).sort_values(cols[:5]).reset_index(drop=True)
+
+
 # --- Mix shift: buyers moving to SUVs and utes ---
 
 
@@ -250,7 +269,8 @@ def main() -> None:
         "new_segment_prices": seg,
         "group_segment_matrix": group_segment_matrix(seg, earn),
         "hedonic_cv": cross_validate(df),
-        "state_premiums": state_premiums(df, fit),
+        "state_premiums": (premiums := state_premiums(df, fit)),
+        "ai_panel": ai_panel(prices, seg, earn, premiums),
         "segment_effects": effects(fit, "C(body_type", "segment"),
         "depreciation_curves": depreciation_curves(df),
         "brand_retention": brand_retention(df),

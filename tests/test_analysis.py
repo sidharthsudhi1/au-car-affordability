@@ -80,3 +80,12 @@ def test_state_premium_baseline(tables):
 
 def test_cohort_mix_sums_to_one(tables):
     assert np.allclose(tables["cohort_mix"].groupby("year")["share"].sum(), 1)
+
+
+def test_ai_panel_is_income_over_price(tables):
+    p = tables["ai_panel"]
+    assert np.allclose(p["ai"], p["annual_income"] / p["price"], rtol=1e-3)
+    assert p.groupby(["year", "state", "sex", "work_status"]).size().eq(5).all()
+    nsw = p[(p["state"] == "NSW") & (p["year"] == 2023)].groupby("segment")["price"].first()
+    aus = p[(p["state"] == "AUS") & (p["year"] == 2023)].groupby("segment")["price"].first()
+    assert np.allclose(nsw, aus, atol=1)
